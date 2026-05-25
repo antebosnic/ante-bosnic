@@ -27,7 +27,7 @@ const nameClass =
   "font-[family-name:var(--font-inter)] font-medium text-white mix-blend-overlay capitalize";
 
 export default async function Home() {
-  const { data: projects } = await sanityFetch<SanityProject[]>({ query: PORTFOLIO_QUERY });
+  const { data: projects } = await sanityFetch({ query: PORTFOLIO_QUERY }) as { data: SanityProject[] };
 
   return (
     <main>
