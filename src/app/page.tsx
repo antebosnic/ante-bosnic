@@ -4,17 +4,31 @@ import IntroSection from "./components/IntroSection";
 import AboutSection from "./components/AboutSection";
 import PhotoBreak from "./components/PhotoBreak";
 import ServicesSection from "./components/ServicesSection";
-import PortfolioSection from "./components/PortfolioSection";
+import PortfolioSection, { type SanityProject } from "./components/PortfolioSection";
 import TestimonialsSection from "./components/TestimonialsSection";
 import NewsSection from "./components/NewsSection";
 import Footer from "./components/Footer";
+import { sanityFetch } from "@/sanity/lib/live";
+
+const PORTFOLIO_QUERY = `*[_type == "project"] | order(order asc) {
+  _id,
+  title,
+  imageUrl,
+  image,
+  tags,
+  tall,
+  order,
+  link
+}`;
 
 const heroImage = "/hero-bg.png";
 
 const nameClass =
   "font-[family-name:var(--font-inter)] font-medium text-white mix-blend-overlay capitalize";
 
-export default function Home() {
+export default async function Home() {
+  const { data: projects } = await sanityFetch({ query: PORTFOLIO_QUERY }) as { data: SanityProject[] };
+
   return (
     <main>
       {/* Section has no overflow-hidden so the large text is never clipped.
@@ -102,7 +116,7 @@ export default function Home() {
       <AboutSection />
       <PhotoBreak />
       <ServicesSection />
-      <PortfolioSection />
+      <PortfolioSection projects={projects} />
       <TestimonialsSection />
       <NewsSection />
       <Footer />

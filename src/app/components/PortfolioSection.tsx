@@ -1,4 +1,6 @@
 import Image from "next/image";
+import type { SanityImageSource } from "@sanity/image-url";
+import { urlFor } from "@/sanity/lib/image";
 
 const mono =
   "font-[family-name:var(--font-geist-mono)] font-normal text-[14px] leading-[1.1] uppercase";
@@ -6,7 +8,6 @@ const mono =
 function ArrowUpRight({ className }: { className?: string }) {
   return (
     <svg width="32" height="32" viewBox="0 0 32 32" fill="currentColor" className={`shrink-0 ${className ?? ""}`}>
-      {/* Filled northeast arrow matching the bold Figma icon */}
       <path d="M6 23.5L6 26L8.5 26L26 8.5L26 21L29 21L29 3L11 3L11 6L23.5 6L6 23.5Z" />
     </svg>
   );
@@ -20,21 +21,32 @@ function Corner({ className }: { className?: string }) {
   );
 }
 
-interface Project {
+export interface SanityProject {
+  _id: string;
   title: string;
-  image: string;
+  imageUrl?: string;
+  image?: SanityImageSource;
+  tags?: string[];
   tall: boolean;
+  order: number;
+  link?: string;
 }
 
-function ProjectCard({ title, image, tall }: Project) {
-  const imageH = tall ? "md:h-[744px]" : "md:h-[699px]";
+function getImageSrc(project: SanityProject): string {
+  if (project.imageUrl) return project.imageUrl;
+  if (project.image) return urlFor(project.image).url();
+  return "";
+}
+
+function ProjectCard({ project }: { project: SanityProject }) {
+  const imageH = project.tall ? "md:h-[744px]" : "md:h-[699px]";
+  const src = getImageSrc(project);
   return (
     <div>
       <div className={`relative w-full aspect-square ${imageH} md:aspect-auto overflow-hidden`}>
-        <Image src={image} alt={title} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
-        {/* Tag pills — bottom-left overlay */}
+        <Image src={src} alt={project.title} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
         <div className="absolute bottom-4 left-4 flex gap-2">
-          {["Social Media", "Photography"].map((tag) => (
+          {(project.tags ?? []).map((tag) => (
             <span
               key={tag}
               className="bg-white/65 backdrop-blur-md text-neutral-900 font-[family-name:var(--font-inter)] font-normal text-[13px] px-4 py-2 rounded-full"
@@ -49,7 +61,7 @@ function ProjectCard({ title, image, tall }: Project) {
           className="font-[family-name:var(--font-inter)] font-black italic uppercase leading-none tracking-[-0.03em]"
           style={{ fontSize: "clamp(24px, 2.78vw, 40px)" }}
         >
-          {title}
+          {project.title}
         </h3>
         <ArrowUpRight />
       </div>
@@ -81,24 +93,10 @@ function CtaBlock() {
   );
 }
 
-const leftProjects: Project[] = [
-  { title: "Surfers Paradise", image: "/portfolio-surfers.png",   tall: true  },
-  { title: "Cyberpunk Caffe",  image: "/portfolio-cyberpunk.png", tall: false },
-];
+export default function PortfolioSection({ projects }: { projects: SanityProject[] }) {
+  const left = projects.filter((_, i) => i % 2 === 0);
+  const right = projects.filter((_, i) => i % 2 === 1);
 
-const rightProjects: Project[] = [
-  { title: "Agency 976",         image: "/portfolio-agency.png",  tall: false },
-  { title: "Minimal Playground", image: "/portfolio-minimal.png", tall: true  },
-];
-
-const mobileOrder: Project[] = [
-  { title: "Surfers Paradise",   image: "/portfolio-surfers.png",   tall: true  },
-  { title: "Cyberpunk Caffe",    image: "/portfolio-cyberpunk.png", tall: false },
-  { title: "Agency 976",         image: "/portfolio-agency.png",    tall: false },
-  { title: "Minimal Playground", image: "/portfolio-minimal.png",   tall: true  },
-];
-
-export default function PortfolioSection() {
   return (
     <section className="bg-black md:bg-white px-4 md:px-8 pt-8 md:pt-12 pb-12 md:pb-20 relative" id="projects">
 
@@ -130,18 +128,18 @@ export default function PortfolioSection() {
 
       {/* Mobile: single column */}
       <div className="flex flex-col gap-8 md:hidden">
-        {mobileOrder.map((p) => <ProjectCard key={p.title} {...p} />)}
+        {projects.map((p) => <ProjectCard key={p._id} project={p} />)}
         <CtaBlock />
       </div>
 
       {/* Desktop: 2-column staggered */}
       <div className="hidden md:flex items-start gap-6">
         <div className="flex-1 flex flex-col gap-[123px]">
-          {leftProjects.map((p) => <ProjectCard key={p.title} {...p} />)}
+          {left.map((p) => <ProjectCard key={p._id} project={p} />)}
           <CtaBlock />
         </div>
         <div className="flex-1 flex flex-col gap-[123px] pt-[240px]">
-          {rightProjects.map((p) => <ProjectCard key={p.title} {...p} />)}
+          {right.map((p) => <ProjectCard key={p._id} project={p} />)}
         </div>
       </div>
     </section>
