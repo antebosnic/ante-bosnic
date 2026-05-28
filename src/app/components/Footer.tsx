@@ -1,3 +1,11 @@
+"use client";
+
+import { useRef, useEffect } from "react";
+import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+import AnimatedButton from "./AnimatedButton";
+import { openContactModal } from "./ContactModal";
+
 const inter = "font-[family-name:var(--font-inter)]";
 const mono = "font-[family-name:var(--font-geist-mono)]";
 
@@ -20,18 +28,73 @@ function Heading() {
 
 function TalkButton({ large }: { large?: boolean }) {
   return (
-    <button
-      className={`${inter} border border-white text-white font-medium rounded-full self-start hover:bg-white hover:text-black transition-colors tracking-[-0.04em]
-        ${large ? "text-[16px] px-6 py-4" : "text-[14px] px-4 py-2.5"}`}
+    <AnimatedButton
+      variant="light"
+      onClick={openContactModal}
+      className={`self-start ${large ? "text-[16px] px-6 py-4" : "text-[14px] px-4 py-2.5"}`}
     >
       Let&apos;s talk
-    </button>
+    </AnimatedButton>
   );
 }
 
-export default function Footer() {
+export default function Footer({ isStatic = false }: { isStatic?: boolean }) {
+  const footerRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (isStatic) return;
+
+    gsap.registerPlugin(ScrollTrigger);
+
+    const footer = footerRef.current;
+    const main = document.getElementById("main-content");
+    if (!footer || !main) return;
+
+    // A pointer-events-none spacer after main creates scroll room without
+    // blocking footer interactions (transparent padding would block clicks)
+    const spacer = document.getElementById("footer-spacer") as HTMLElement | null;
+    const sync = () => {
+      if (spacer) spacer.style.height = footer.offsetHeight + "px";
+      ScrollTrigger.refresh();
+    };
+    sync();
+    window.addEventListener("resize", sync);
+
+    // Footer content rises as it's revealed (scrubbed to scroll)
+    const ctx = gsap.context(() => {
+      const sentinel = document.getElementById("footer-sentinel");
+      if (!sentinel) return;
+
+      gsap.fromTo(
+        footer,
+        { y: 50 },
+        {
+          y: 0,
+          ease: "none",
+          scrollTrigger: {
+            trigger: sentinel,
+            start: "top bottom",
+            end: "top 40%",
+            scrub: 1.5,
+          },
+        }
+      );
+    });
+
+    return () => {
+      window.removeEventListener("resize", sync);
+      if (spacer) spacer.style.height = "";
+      ctx.revert();
+    };
+  }, [isStatic]);
+
   return (
-    <footer className="bg-black text-white" id="contact">
+    <footer
+      ref={footerRef}
+      className={`bg-black text-white ${isStatic ? "" : "fixed bottom-0 left-0 right-0 z-0"}`}
+      id="contact"
+      data-theme="dark"
+    >
 
       {/* ── Desktop ── */}
       <div className="hidden md:block px-8 pt-12 pb-0">

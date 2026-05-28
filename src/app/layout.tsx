@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { SanityLive } from "@/sanity/lib/live";
 import { Geist, Geist_Mono, DM_Sans, Inter, Playfair_Display } from "next/font/google";
+import ContactModal from "./components/ContactModal";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -48,7 +49,8 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         {children}
-        <SanityLive />
+        <ContactModal />
+        <SanityLive refreshOnFocus={false} refreshOnReconnect={false} />
       </body>
     </html>
   );
